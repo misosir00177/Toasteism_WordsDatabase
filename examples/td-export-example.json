@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "topicId": "ai-menu",
+  "generatedAt": "2026-10-26T12:00:00.000Z",
+  "items": [
+    {"id": "example-k001", "text": "節省菜單製作成本", "sizeLevel": 3, "baseWeight": 0.8},
+    {"id": "example-k002", "text": "圖片與實際餐點可能有落差", "sizeLevel": 2, "baseWeight": 0.5}
+  ]
+}

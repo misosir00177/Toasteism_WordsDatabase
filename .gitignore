@@ -1,0 +1,39 @@
+# Node.js
+node_modules/
+
+# Vite Build
+dist/
+dist-ssr/
+*.local
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Firebase Local Cache
+.firebase/
+
+# Logs
+*.log
+npm-debug.log*
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Sensitive Credentials
+serviceAccountKey*.json
+*firebase-adminsdk*.json
+.secrets/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# TypeScript
+*.tsbuildinfo

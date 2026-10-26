@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 管理員文件必須由 Firebase Console 手動建立或由受信任的後端配置。
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.enabled == true;
+    }
+
+    function validTopic() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['name', 'createdAt', 'updatedAt'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 60
+        && d.createdAt is timestamp
+        && d.updatedAt is timestamp;
+    }
+
+    function validContent() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+          'topicId', 'text', 'sizeLevel', 'baseWeight', 'isActive',
+          'createdAt', 'updatedAt'
+        ])
+        && d.keys().hasAll([
+          'topicId', 'text', 'sizeLevel', 'baseWeight', 'isActive',
+          'createdAt', 'updatedAt'
+        ])
+        && d.topicId is string
+        && exists(/databases/$(database)/documents/topics/$(d.topicId))
+        && d.text is string && d.text.size() > 0 && d.text.size() <= 120
+        && d.sizeLevel is int && d.sizeLevel >= 1 && d.sizeLevel <= 3
+        && d.baseWeight is number && d.baseWeight >= 0 && d.baseWeight <= 1
+        && d.isActive is bool
+        && d.createdAt is timestamp && d.updatedAt is timestamp;
+    }
+
+    match /admins/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    match /topics/{topicId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && topicId.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && validTopic()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin()
+        && validTopic()
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      // 防止刪除議題造成孤兒 contentItems；v1 不提供刪除議題。
+      allow delete: if false;
+    }
+
+    match /contentItems/{itemId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && validContent()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin()
+        && validContent()
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    // 未明列的所有文件，預設不提供外部讀寫。
+  }
+}
